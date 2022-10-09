@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model additional_reference {
+  id           BigInt                     @id(map: "idx_19398_primary") @default(autoincrement())
+  user_id      Decimal                    @db.Decimal
+  property_id  Decimal                    @db.Decimal
+  type         additional_reference_type?
+  description  String                     @db.VarChar(100)
+  start_date   DateTime                   @db.Date
+  end_date     DateTime                   @db.Date
+  annual_fee   Decimal?                   @db.Decimal(5, 2)
+  monthly_fee  Decimal?                   @db.Decimal(6, 2)
+  balance      Decimal?                   @db.Decimal(8, 2)
+  rate         Decimal?                   @db.Decimal(5, 2)
+  payment_date Int?                       @db.SmallInt
+  company      String?                    @db.VarChar(100)
+  company_ref  String?                    @db.VarChar(100)
+  dd_ref       String?                    @db.VarChar(100)
+
+  @@index([property_id], map: "idx_19398_property_id")
+  @@index([user_id], map: "idx_19398_user_id")
+}
+
+model blog {
+  id             BigInt    @id(map: "idx_19405_primary") @default(autoincrement())
+  type           blog_type
+  role           blog_role
+  effective_from DateTime? @db.Date
+  effective_to   DateTime? @db.Date
+  title          String    @db.VarChar(100)
+  content        String    @db.VarChar(124)
+}
+
+model finance {
+  id          BigInt    @id(map: "idx_19410_primary") @default(autoincrement())
+  user_id     Decimal   @db.Decimal
+  property_id Decimal   @db.Decimal
+  description String?   @db.VarChar(100)
+  amount      Decimal   @db.Decimal(6, 2)
+  date        DateTime  @db.Date
+  type        String?   @db.VarChar(100)
+  until       DateTime? @db.Date
+
+  @@index([property_id], map: "idx_19410_property_id")
+  @@index([user_id], map: "idx_19410_user_id")
+}
+
+model owner {
+  id             BigInt           @id(map: "idx_19417_primary") @default(autoincrement())
+  user_id        Decimal          @db.Decimal
+  firstname      String           @db.VarChar(100)
+  lastname       String           @db.VarChar(100)
+  property_owner property_owner[]
+
+  @@index([user_id], map: "idx_19417_user_id")
+}
+
+model property {
+  id              Int            @id(map: "idx_19424_primary") @default(autoincrement())
+  address         String         @db.VarChar(100)
+  postcode        String         @db.VarChar(20)
+  type            property_type?
+  bedrooms        Int?           @db.SmallInt
+  purchase_date   DateTime       @db.Date
+  purchase_amount Decimal        @db.Decimal(9, 2)
+  sold_date       DateTime?      @db.Date
+  current_value   Decimal        @db.Decimal(9, 2)
+  user            user           @relation(fields: [user_id], references: [id])
+  user_id         Int
+
+  @@index([user_id], map: "idx_19424_user_id")
+}
+
+model property_owner {
+  id          BigInt    @id(map: "idx_19431_primary") @default(autoincrement())
+  user_id     Decimal   @db.Decimal
+  property_id Decimal   @db.Decimal
+  owner_id    BigInt
+  start_date  DateTime? @db.Date
+  end_date    DateTime? @db.Date
+  percentage  Decimal   @db.Decimal(5, 2)
+  owner       owner     @relation(fields: [owner_id], references: [id], onDelete: Cascade, map: "fk_property_owner_owner")
+
+  @@index([owner_id], map: "idx_19431_owner_id")
+  @@index([property_id], map: "idx_19431_property_id")
+  @@index([user_id], map: "idx_19431_user_id")
+}
+
+model role {
+  id      BigInt  @id(map: "idx_19438_primary") @default(autoincrement())
+  user_id Decimal @db.Decimal
+  name    String  @db.VarChar(100)
+
+  @@unique([user_id, name], map: "idx_19438_email")
+  @@index([user_id], map: "idx_19438_user_id")
+}
+
+model tenancy {
+  id          BigInt   @id(map: "idx_19445_primary") @default(autoincrement())
+  user_id     Decimal  @db.Decimal
+  property_id Decimal  @db.Decimal
+  start_date  DateTime @db.Date
+  end_date    DateTime @db.Date
+  rent_date   Int      @db.SmallInt
+  rent        Decimal  @db.Decimal(6, 2)
+  deposit     Decimal  @db.Decimal(6, 2)
+  deposit_id  String   @db.VarChar(100)
+
+  @@index([property_id], map: "idx_19445_property_id")
+  @@index([user_id], map: "idx_19445_user_id")
+}
+
+model user {
+  id         Int        @id(map: "idx_19452_primary") @default(autoincrement())
+  email      String     @unique(map: "idx_19452_email") @db.VarChar(100)
+  password   String     @db.VarChar(100)
+  name       String     @db.VarChar(100)
+  enabled    Boolean
+  properties property[]
+}
+
+enum additional_reference_type {
+  CO_CHECK
+  ELEC_CHECK
+  EPC
+  GAS_CHECK
+  GAS_CONTRACT
+  INSURANCE
+  MORTGAGE_STATEMENT
+  OTHER
+  SMOKE_CHECK
+}
+
+enum blog_role {
+  ROLE_METRICS
+  ROLE_ADMIN
+  ROLE_USER
+  ROLE_LANDLORD
+  ROLE_TENANT
+}
+
+enum blog_type {
+  NEWS
+  MAINTENANCE
+  OTHER
+  EMPTY_ENUM_VALUE @map("")
+}
+
+enum property_type {
+  APARTMENT
+  TERRACED
+  SEMI_DETACHED @map("SEMI-DETACHED")
+  DETACHED
+  OTHER
+}
